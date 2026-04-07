@@ -1,0 +1,10 @@
+# Local runtime artifacts
+__pycache__/
+*.pyc
+
+# Local secrets
+config.yaml
+prompts.yaml
+
+# Optional outputs
+outputs/
