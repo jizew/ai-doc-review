@@ -1,51 +1,140 @@
-# Example config template (no secrets)
+# LLM Provider Configuration
 llm:
+  # 提供商选择: openai, anthropic, deepseek, qwen, glm, ollama
   provider: openai
+
+  # 模型名称示例：
+  # OpenAI: gpt-4o, gpt-4-turbo, gpt-3.5-turbo
+  # Anthropic: claude-3-opus-20240229, claude-3-sonnet-20240229, claude-3-haiku-20240307
+  # DeepSeek: deepseek-chat, deepseek-coder
+  # Qwen: qwen-turbo, qwen-plus, qwen-max
+  # GLM: glm-4, glm-3-turbo, glm-4-0520, glm-4-air
+  # Ollama: llama2, llama3, mistral, codellama
   model: gpt-4o
+
+  # API 密钥（Ollama 不需要）
+  # 获取方式：
+  # - OpenAI: https://platform.openai.com/api-keys
+  # - Anthropic: https://console.anthropic.com/
+  # - DeepSeek: https://platform.deepseek.com/keys
+  # - Qwen: https://dashscope.aliyun.com/apiKey
+  # - GLM: https://open.bigmodel.cn/
   api_key: ""
+
+  # 自定义 API 端点（可选）
+  # 填写场景：
+  # 1. 使用中转代理服务（如 SiliconFlow: https://api.siliconflow.cn/v1）
+  # 2. 使用提供商的自定义端点
+  # 3. 使用其他 OpenAI 兼容格式的 API
+  # 提供商默认值（不填时自动使用默认值）：
+  # - OpenAI:    https://api.openai.com/v1
+  # - Anthropic: https://api.anthropic.com
+  # - DeepSeek:  https://api.deepseek.com
+  # - Qwen:      https://dashscope.aliyuncs.com/compatible-mode/v1
+  # - GLM:       https://open.bigmodel.cn/api/paas/v4
+  # - Ollama:    http://localhost:11434
+  # 注意：如果 URL 已包含版本号（如 /v1），直接填写完整 URL
   base_url: ""
+
+  # 生成温度：0.0-2.0
+  # 0.0: 完全确定性输出
+  # 0.3: 低创造性，适合审校（推荐）
+  # 0.7: 中等创造性
+  # 1.0+: 高创造性
   temperature: 0.3
   max_tokens: 4096
   timeout: 300.0
 
-llm_presets:
-  - name: example-openai
-    config:
-      provider: openai
-      model: gpt-4o
-      api_key: ""
-      base_url: ""
-      temperature: 0.3
-      max_tokens: 4096
-      timeout: 300.0
+# LLM 预设列表（可选）
+# 可在此定义多套模型配置，在 Web 界面中快速切换
+# 格式参考：
+# llm_presets:
+#   - name: my-deepseek
+#     config:
+#       provider: deepseek
+#       model: deepseek-chat
+#       api_key: "your-api-key"
+#       base_url: ""
+#       temperature: 0.3
+#       max_tokens: 4096
+#       timeout: 300.0
+llm_presets: []
 
 proofreading:
+  # 审校模式
+  # comments:      在原文中添加批注，保留原貌（推荐，兼容性最好）
+  # track_changes: 显示修订痕迹，可接受/拒绝每处改动（需安装 docx-editor 或 docx-revisions）
   mode: comments
+
+  # 分块模式
+  # paragraph: 按段落分块（推荐，语义更完整）
+  # fixed:     按固定字数分块
   chunk_mode: paragraph
+
+  # 每次发送给 LLM 的字符数上限
+  # 建议：300-1000，根据文档复杂度调整
+  # 较小值：更精准但 API 调用次数更多
+  # 较大值：调用次数少但可能超出单次 token 限制
   chunk_size: 500
+
+  # 相邻分块之间的重叠字符数
+  # 建议：20-100，确保分块边界处的上下文连贯
   chunk_overlap: 50
+
+  # 并发请求数（同时发送的 API 请求数量）
+  # 建议：1-10，根据网络状况和 API 限速调整
+  # 较小值：更稳定但更慢
+  # 较大值：更快但可能触发 API 限流（429 错误）
   batch_size: 5
+
+  # 最大失败自动重试次数（用于处理 503 / 429 请求限速错误）
   max_retries: 5
+
+  # 最大 JSON 解析失败重试次数（与总重试次数共享限额）
   max_parse_retries: 3
+
+  # 基础重试休眠时间（秒），采用指数退避策略（Exponential Backoff）
   base_retry_delay: 2.0
+
+  # 是否保留原文格式（字体、字号、样式等）
   preserve_formatting: true
+
+  # 是否对参考文献进行 GB/T 7714 格式规范化
   reference_formatting: false
+
+  # 审阅者名称（显示在批注作者栏中）
   ai_editor_name: AI Editor
+
+  # 是否在文档开头添加审校摘要表头
   add_header: false
+
+  # 中文字体（用于输出文档的字体统一）
   cn_font: 宋体
+  # 英文字体
   en_font: Times New Roman
+  # 是否对全文统一应用上述字体
   apply_font_global: true
-  fallback_preset: 无 (不使用)
+
+  # 备用回退模型预设名称（可选）
+  # 当主模型返回无法解析的响应时，自动切换到此预设重试
+  # 填写 llm_presets 中定义的预设名称，或留空"无 (不使用)"
+  fallback_preset: "无 (不使用)"
 
 ui:
   title: AI 文档智能审校系统
   page_width: wide
-  cache_ttl: 3600
+  cache_ttl: 3600  # 缓存时间（秒）
 
+# 测试模式
+# 启用后仅处理文档的前 N 个分块，用于快速验证 Prompt 效果
 test_mode:
   enabled: false
   chunks: 2
 
+# Prompt 自定义（可选）
+# 默认 prompt 已内置在 prompt_templates.py 中
+# 如需自定义，在此填写（优先级高于默认值）
+# 如需重置，点击 Web 界面中"恢复默认 prompt"按钮即可
 prompt:
   system: 你是一位专业的中文编辑，负责文档校对和润色。
-  detail_level: standard
+  detail_level: standard  # minimal / standard / detailed

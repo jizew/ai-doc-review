@@ -1,282 +1,100 @@
-# AI 文档智能审校系统
+# AI 文档智能审校系统 (AI Document Review System)
 
-基于大语言模型的智能文档校对工具，支持多种 LLM 提供商和 Word 文档审校。
+基于大语言模型（LLM）的智能文档校对与润色工具，专为处理 Word (`.docx`) 文档而设计。
+无论你是需要修正错别字、改善中文语法排版，还是希望为长篇文档附加批量智能批注，本项目都能帮你高效处理。
 
-## 功能特性
+## ✨ 核心特性
 
-- 🚀 **多 LLM 支持**: OpenAI、Anthropic、DeepSeek、通义千问 (Qwen)、Ollama
-- 📝 **Word 文档处理**: 上传 .docx 文件进行智能审校
-- 📊 **两种审校模式**:
-  - 批注模式: 在原文中添加批注，保留原貌
-  - 修订模式: 显示 Track Changes，直观展示修改
-- 🧪 **测试模式**: 仅处理前几个段落用于测试 prompt
-- ⚙️ **灵活配置**: 自定义 LLM 参数、分块大小、并发数等
-- 📈 **实时进度**: 显示处理进度和统计信息
+- 🚀 **全面拥抱大语言模型生态**: 原生支持 OpenAI, Anthropic, DeepSeek, 通义千问 (Qwen), 智谱 AI (GLM) 以及 Ollama 本地化大模型。
+- 📝 **开箱即用的 Word 文档支持**: 一键上传 `.docx` 文件，系统将自动进行分块解析与语义校验。
+- 📊 **两套强大的审阅视角**:
+  - **批注模式 (Comments)**: 直接在原文对应处悬挂 Word 批注，不破坏原始文档面貌（极其适合严肃审核）。
+  - **修订模式 (Track Changes)**: 还原真实的人工修订痕迹，可“接受/拒绝”每项修改。
+- ⚙️ **配置灵活性与健壮性**: 支持动态备用回退模型（Fallback）、自定义 API 端点中继、支持高并发并内建 API 速率重试保护。
+- 💻 **可视化交互**: 基于 Streamlit 开发的浅色/深色护眼仪表盘，包含实时的 Token 开销、API 处理进度与错误统计。
 
-## 安装
+---
+
+## 🛠 初始化与安装
+
+本项目对系统侵入极小。我们推荐通过标准 Python 虚拟环境进行隔离安装。
+
+**1. 克隆代码或下载项目**
 
 ```bash
-# 克隆项目
-git clone <repository-url>
-cd doc_review
+git clone https://github.com/YourUsername/AI-Doc-Review.git
+cd AI-Doc-Review
+```
 
-# 激活 conda 环境（如果使用默认环境 ai312）
-conda activate ai312
+**2. 创建并激活虚拟环境（推荐）**
 
-# 安装依赖
+```bash
+python -m venv venv
+
+# Windows 下激活：
+venv\Scripts\activate
+# Linux/macOS 下激活：
+source venv/bin/activate
+```
+
+**3. 安装核心依赖**
+
+```bash
 pip install -r requirements.txt
 ```
 
-### 推荐安装：ruamel.yaml
+> **🔥 为什么还需要 `ruamel.yaml` 依赖项？**  
+> 因为本项目包含 Web 界面供你动态修改系统参数，传统的 Python Yaml 解析器在重写配置时**会彻底抹除掉 `#` 开头的所有人工说明注释**。  
+> 我们在 `requirements.txt` 中已预装 `ruamel.yaml` （它是保留格式的安全解析器），能确保您保存配置后，您的 `config.yaml` 依然美观并带有提示信息。
 
-**强烈推荐安装 `ruamel.yaml`** 以保留配置文件的注释：
+---
 
-```bash
-pip install ruamel.yaml
-```
+## 🚀 启动与使用
 
-**重要修复**：
-- 已修复配置保存时注释丢失的 bug
-- 使用 `ruamel.yaml` 可以保留所有格式和注释
-- 不安装 `ruamel.yaml` 时功能不受影响，但会丢失注释
-
-### 可选: 安装 Track Changes 支持 (推荐 docx-editor)
-
-**推荐使用 docx-editor (更新的库):**
-
-```bash
-pip install docx-editor
-```
-
-**或使用 docx-revisions:**
-
-```bash
-pip install docx-revisions==0.1.3
-```
-
-## 配置
-
-### 方法 1: 通过 Web UI 配置
-
-1. 运行应用
-2. 在侧边栏配置 LLM 参数
-3. 点击"保存配置"
-
-### 方法 2: 手动编辑配置文件
-
-编辑 `config.yaml`:
-
-```yaml
-llm:
-  provider: openai  # openai, anthropic, deepseek, qwen, ollama
-  model: gpt-4o
-  api_key: "your-api-key"
-  base_url: ""  # 可选: 自定义 API 端点
-  temperature: 0.3
-
-proofreading:
-  mode: comments  # comments (批注) 或 track_changes (修订)
-  chunk_size: 500  # 每次处理的字符数
-  chunk_overlap: 50  # 分块重叠
-  batch_size: 5  # 并发请求数
-```
-
-## 使用
-
-### 启动应用
+在应用根目录下，执行我们提供的 Streamlit 启动指令：
 
 ```bash
 streamlit run app.py
 ```
 
-应用将在 `http://localhost:8501` 启动。
+服务通常会启动在 `http://localhost:8501`。接下来您只需：
+1. 在左侧面板填写您的模型 API 密钥（如 DeepSeek 或 OpenAI）以及生成参数配置。
+2. 上传一个或一批待审阅的 `.docx` 文档。
+3. 点击“开始审校”按钮，坐享其成。
 
-### 工作流程
+---
 
-1. **配置 LLM**: 在侧边栏设置 LLM 提供商、模型、API Key 等
-2. **上传文档**: 选择 .docx 文件上传
-3. **查看文档信息**: 确认文档的段落数、字符数、Token 数等
-4. **开始审校**: 点击"开始审校"按钮
-5. **查看结果**: 查看审校统计和示例结果
-6. **下载文档**: 下载带批注或修订的 Word 文档
+## 🔧 系统配置 (`config.yaml`)
 
-### 测试模式
+你可以通过 Web 界面右侧直接修改配置，也可以手动使用编辑器修改根目录生成的 `config.yaml`。
 
-启用测试模式可以仅处理前几个段落，用于测试 prompt 是否合适:
+配置项极其直白，下面是一些关键项：
+* **`llm`**: 管理模型调度。支持 `api_key` 鉴权与 `base_url` （用于接入 SiliconFlow 等中转站或自建镜像服务器）。
+* **`proofreading.mode`**: 可以选择 `comments` 或者 `track_changes` 风格。
+* **`proofreading.chunk_size`**: 分块字数（越短越精准但也消耗更多 token，建议保持在 500～800 字）。
+* **`fallback_preset`**: 独家亮点！允许您设定一个备选模型预设；当默认智能模型遭遇内容安全拦截或结构破坏时，系统自动切走降维保护以防进程崩溃。
 
-1. 在侧边栏展开"测试模式"
-2. 勾选"启用测试模式"
-3. 设置测试段落数 (如 2-3)
-4. 开始审校
+---
 
-## 项目结构
+## 📚 常见问题解答 (FAQ)
 
-```
-doc_review/
-├── app.py                 # Streamlit 主应用
-├── llm_providers.py       # LLM 提供商接口
-├── docx_parser.py         # Docx 解析器
-├── proofreader.py         # AI 审校引擎
-├── revision_writer.py     # Word 修订写入器
-├── prompt_templates.py    # Prompt 模板
-├── utils.py             # 工具函数
-├── config.yaml           # 配置文件
-├── requirements.txt      # 依赖列表
-└── README.md            # 本文件
-```
-
-## 支持的 LLM 提供商
-
-### OpenAI
-- Provider: `openai`
-- 默认模型: `gpt-4o`
-- 文档: https://platform.openai.com/docs
-- API 格式: OpenAI 标准
-
-### Anthropic (Claude)
-- Provider: `anthropic`
-- 默认模型: `claude-3-opus-20240229`
-- 文档: https://docs.anthropic.com
-- API 格式: 自有格式（非 OpenAI 兼容）
-
-### DeepSeek
-- Provider: `deepseek`
-- 默认模型: `deepseek-chat`
-- 文档: https://platform.deepseek.com/api-docs/
-- API 格式: OpenAI 兼容
-
-### 通义千问 (Qwen)
-- Provider: `qwen`
-- 默认模型: `qwen-turbo`
-- 文档: https://help.aliyun.com/zh/dashscope/
-- API 格式: OpenAI 兼容（compatible-mode）
-
-### 智谱 AI (GLM)
-- Provider: `glm`
-- 默认模型: `glm-4`
-- 文档: https://open.bigmodel.cn/dev/api
-- API 格式: OpenAI 兼容
-
-### Ollama (本地模型)
-- Provider: `ollama`
-- 默认模型: `llama2`
-- 文档: https://ollama.com/docs/
-- 不需要 API Key
-- API 格式: 自有格式
-
-## 配置说明
-
-### LLM 参数
-
-- **provider**: LLM 提供商名称（支持 openai, anthropic, deepseek, qwen, glm, ollama）
-- **model**: 模型名称
-- **api_key**: API 密钥 (Ollama 不需要)
-- **base_url**: 自定义 API 端点 (可选)
-  - 对于 OpenAI 兼容的 API（如 DeepSeek, Qwen, GLM），可以覆盖默认端点
-  - 通常不需要填写
-  - 详见下方"各提供商 Base URL 配置"
-- **temperature**: 生成温度 (0.0-2.0)，越低越确定性
-
-### 各提供商 Base URL 配置
-
-| 提供商 | provider 值 | 默认 Base URL | 可否自定义 | 自定义场景 |
-|---------|--------------|---------------|-----------|-----------|
-| OpenAI | `openai` | `https://api.openai.com/v1` | ✅ 是 | 使用代理或其他端点 |
-| Anthropic | `anthropic` | `https://api.anthropic.com` | ✅ 是 | 使用代理或其他端点 |
-| DeepSeek | `deepseek` | `https://api.deepseek.com` | ✅ 是 | 使用自定义端点 |
-| 通义千问 | `qwen` | `https://dashscope.aliyuncs.com/compatible-mode/v1` | ✅ 是 | 使用自定义端点 |
-| 智谱 AI | `glm` | `https://open.bigmodel.cn/api/paas/v4` | ✅ 是 | 使用自定义端点 |
-| Ollama | `ollama` | `http://localhost:11434` | ✅ 是 | 使用远程 Ollama 服务 |
-
-**重要提示**：
-- OpenAI 兼容格式（OpenAI、DeepSeek、Qwen、GLM）使用相同的 API 路径和格式
-- 如果提供商的 API 有 `/v1` 或 `/v4` 后缀，在 `base_url` 中已包含
-- 对于使用 `/compatible-mode/v1` 兼容模式的 API，不需要担心路径问题
-
-### 使用自定义 OpenAI 兼容格式的模型
-
-如果您有其他 OpenAI 兼容格式的 API（未预设支持），可以通过 `base_url` 配置使用：
-
-**要求**：
-- API 路径为 `/chat/completions`
-- Header 使用 `Authorization: Bearer <token>`
-- 请求体格式符合 OpenAI 标准
-- 响应格式包含 `choices[0].message.content`
-
-**配置示例**：
-
-```yaml
-llm:
-  provider: openai
-  model: your-custom-model-name
-  api_key: "your-api-key"
-  base_url: "https://your-custom-api-endpoint"  # 或 "https://your-custom-api-endpoint/v1"
-  temperature: 0.3
-```
-
-**注意事项**：
-- 如果 API 端点已包含版本号（如 `/v1`），直接填写完整 URL
-- 如果 API 端点不包含版本，建议手动添加（如 `/v1`）
-- 各模型提供商的 API 格式差异较大，建议优先使用预设的提供商
-
-### 审校参数
-
-- **mode**: `comments` (批注) 或 `track_changes` (修订)
-- **chunk_size**: 每次处理的字符数 (100-2000)
-- **chunk_overlap**: 分块之间的重叠字符数 (0-200)
-- **batch_size**: 并发请求数 (1-10)
-- **detail_level**: Prompt 详细程度 (`minimal`, `standard`, `detailed`)
-
-## 常见问题
-
-### Q: Track Changes 模式不工作?
-A: 需要安装 `docx-editor` 或 `docx-revisions` 库:
-
-**推荐使用 docx-editor:**
+### 1. 修改跟踪 (Track Changes) 怎么报错或不可用？
+修订模式因为要深度修改 Word 原生 XML，需要可选模块包的支持。如果你非常需要它，请安装更高级的模块：
 ```bash
 pip install docx-editor
 ```
-
-**或使用 docx-revisions:**
+或者
 ```bash
 pip install docx-revisions==0.1.3
 ```
 
-### Q: 保存配置后注释消失了?
-A: 这是已知问题，已通过以下方式修复：
-1. 安装 `ruamel.yaml` 包：`pip install ruamel.yaml`
-2. 系统会自动检测并使用 `ruamel.yaml` 保留注释
-3. 如果未安装，会回退到标准 yaml（会丢失注释）
+### 2. 本地跑 Ollama 要怎么填信息？
+将 Provider 选为 `ollama`，Model 可以写你自己的本地模型如 `qwen:7b-chat`，无需 API Key（留空），基地址通常为 `http://localhost:11434`。详见左侧边栏对应说明。
 
-### Q: 如何降低成本?
-A:
-1. 使用更小的模型 (如 gpt-3.5-turbo 而非 gpt-4)
-2. 减小 `chunk_size`
-3. 减小 `batch_size`
-4. 使用测试模式先测试 prompt
+### 3. 如何省钱 / 控制 Token 花销？
+建议降低并发（`batch_size` 调小），利用**测试模式**（能锁定只审阅前两段）先观测目前设定的 AI Prompt 是否能输出有效结果。如果不满意，你可以在页面底部随时悬停编辑提示词。
 
-### Q: 中文处理效果如何?
-A: 本系统针对中文文档优化，支持中文错别字、语法、标点等检查。
+---
 
-### Q: 支持哪些 Word 格式?
-A: 仅支持 `.docx` 格式 (Office 2007+)
-
-## 开发
-
-### 运行测试
-
-```bash
-pytest tests/
-```
-
-### 代码风格
-
-项目遵循 PEP 8 代码风格。
-
-## 许可证
-
-MIT License
-
-## 贡献
-
-欢迎提交 Issue 和 Pull Request!
+## 📜 开源许可证
+本项目采用 [MIT License](LICENSE) 授权，意味着你可以自由地进行个人魔改及用于大部分商业场景，请保留本项目声明即可。欢迎发 Pull Request 贡献你的绝妙点子！
